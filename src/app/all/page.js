@@ -30,7 +30,6 @@ export default function AllConversations() {
   }, []);
 
   const handleDelete = async (id, e) => {
-    // Prevent the Link click from firing.
     e.stopPropagation();
     const confirmDelete = window.confirm('Are you sure you want to delete this conversation?');
     if (!confirmDelete) return;
@@ -48,27 +47,30 @@ export default function AllConversations() {
       {conversations.length === 0 ? (
         <p>No conversations found.</p>
       ) : (
-        conversations.map((conv) => (
-          <div key={conv.id} className="conversationCard">
-            <Link legacyBehavior href={`/conversation/${conv.id}`}>
-              <a className="cardLink">
-                <div className="conversationContent">
-                  <div
-                    className="prompt"
-                    dangerouslySetInnerHTML={{ __html: conv.prompt }}
-                  />
-                  <div
-                    className="response"
-                    dangerouslySetInnerHTML={{ __html: conv.response }}
-                  />
-                </div>
-              </a>
-            </Link>
-            <button className="deleteButton" onClick={(e) => handleDelete(conv.id, e)}>
-              Delete
-            </button>
-          </div>
-        ))
+        conversations.map((conv) => {
+          // Extract the first line of the prompt as the title
+          const firstLine = conv.prompt ? conv.prompt.split('\n')[0] : '';
+          // Convert the Firestore timestamp to ISO8601 if available
+          const timestamp =
+            conv.createdAt && conv.createdAt.toDate
+              ? new Date(conv.createdAt.toDate()).toISOString()
+              : 'Unknown';
+          return (
+            <div key={conv.id} className="conversationCard">
+              <Link legacyBehavior href={`/conversation/${conv.id}`}>
+                <a className="cardLink">
+                  <div className="conversationContent">
+                    <div className="promptTitle">{firstLine}</div>
+                    <div className="timestamp">{timestamp}</div>
+                  </div>
+                </a>
+              </Link>
+              <button className="deleteButton" onClick={(e) => handleDelete(conv.id, e)}>
+                Delete
+              </button>
+            </div>
+          );
+        })
       )}
       <style jsx>{`
         .container {
@@ -97,12 +99,13 @@ export default function AllConversations() {
           flex-direction: column;
           gap: 0.5rem;
         }
-        .prompt {
+        .promptTitle {
           font-weight: bold;
           margin-bottom: 0.5rem;
         }
-        .response {
+        .timestamp {
           color: #555;
+          font-size: 0.9rem;
         }
         .deleteButton {
           position: absolute;
